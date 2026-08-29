@@ -3965,10 +3965,11 @@ GetPrimaryCloneSplitRebalanceSteps(RebalanceOptions *options, WorkerNode *cloneN
 					update->targetNode = targetNode;
 					update->updateType = PLACEMENT_UPDATE_MOVE;
 					potentialMoves = lappend(potentialMoves, update);
-					splitShards->cloneShardIdList = lappend_int(splitShards->
-																cloneShardIdList,
-																shardToConsider->shardId
-																);
+					uint64 *shardIdPtr = (uint64 *) palloc0(sizeof(uint64));
+					*shardIdPtr = shardToConsider->shardId;
+
+					splitShards->cloneShardIdList = lappend(splitShards->cloneShardIdList,
+															shardIdPtr);
 
 
 					/* Update simulated costs for the next iteration */
@@ -3977,10 +3978,11 @@ GetPrimaryCloneSplitRebalanceSteps(RebalanceOptions *options, WorkerNode *cloneN
 				}
 				else
 				{
-					splitShards->primaryShardIdList = lappend_int(splitShards->
-																  primaryShardIdList,
-																  shardToConsider->shardId
-																  );
+					uint64 *shardIdPtr = (uint64 *) palloc0(sizeof(uint64));
+					*shardIdPtr = shardToConsider->shardId;
+
+					splitShards->primaryShardIdList = lappend(splitShards->primaryShardIdList,
+															shardIdPtr);
 				}
 			}
 		}
@@ -4068,22 +4070,24 @@ get_snapshot_based_node_split_plan(PG_FUNCTION_ARGS)
 		&options,
 		cloneNode);
 
-	int shardId = 0;
 	TupleDesc tupdesc;
 	Tuplestorestate *tupstore = SetupTuplestore(fcinfo, &tupdesc);
 	Datum values[4];
 	bool nulls[4];
 
 
-	foreach_declared_int(shardId, splitShards->primaryShardIdList)
+	ListCell *shardIdCell = NULL;
+
+	foreach(shardIdCell, splitShards->primaryShardIdList)
 	{
+		uint64 shardId = *((uint64 *) lfirst(shardIdCell));
 		ShardInterval *shardInterval = LoadShardInterval(shardId);
 		List *colocatedShardList = ColocatedShardIntervalList(shardInterval);
 		ListCell *colocatedShardCell = NULL;
 		foreach(colocatedShardCell, colocatedShardList)
 		{
 			ShardInterval *colocatedShard = lfirst(colocatedShardCell);
-			int colocatedShardId = colocatedShard->shardId;
+			uint64 colocatedShardId = colocatedShard->shardId;
 			memset(values, 0, sizeof(values));
 			memset(nulls, 0, sizeof(nulls));
 
@@ -4095,15 +4099,16 @@ get_snapshot_based_node_split_plan(PG_FUNCTION_ARGS)
 		}
 	}
 
-	foreach_declared_int(shardId, splitShards->cloneShardIdList)
+	foreach(shardIdCell, splitShards->cloneShardIdList)
 	{
+		uint64 shardId = *((uint64 *) lfirst(shardIdCell));
 		ShardInterval *shardInterval = LoadShardInterval(shardId);
 		List *colocatedShardList = ColocatedShardIntervalList(shardInterval);
 		ListCell *colocatedShardCell = NULL;
 		foreach(colocatedShardCell, colocatedShardList)
 		{
 			ShardInterval *colocatedShard = lfirst(colocatedShardCell);
-			int colocatedShardId = colocatedShard->shardId;
+			uint64 colocatedShardId = colocatedShard->shardId;
 			memset(values, 0, sizeof(values));
 			memset(nulls, 0, sizeof(nulls));
 

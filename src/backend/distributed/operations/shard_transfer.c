@@ -821,7 +821,7 @@ AdjustShardsForPrimaryCloneNodeSplit(WorkerNode *primaryNode,
 	 * For these shards, we need to remove their data from the clone node
 	 * since the metadata already correctly reflects them on primary.
 	 */
-	uint64 shardId = 0;
+
 	uint32 primaryGroupId = GroupForNode(primaryNode->workerName, primaryNode->workerPort)
 	;
 	uint32 cloneGroupId = GroupForNode(cloneNode->workerName, cloneNode->workerPort);
@@ -835,8 +835,12 @@ AdjustShardsForPrimaryCloneNodeSplit(WorkerNode *primaryNode,
 	 * the shard data from the clone node. The metadata already correctly
 	 * reflects these shards on primary, so no metadata changes are needed.
 	 */
-	foreach_declared_int(shardId, primaryShardList)
+	ListCell *shardIdCell = NULL;
+
+	foreach(shardIdCell, primaryShardList)
 	{
+		uint64 shardId = *((uint64 *) lfirst(shardIdCell));
+
 		ShardInterval *shardInterval = LoadShardInterval(shardId);
 		List *colocatedShardList = ColocatedShardIntervalList(shardInterval);
 
@@ -860,8 +864,10 @@ AdjustShardsForPrimaryCloneNodeSplit(WorkerNode *primaryNode,
 	ereport(NOTICE, (errmsg("processing %d shards for clone node GroupID %d", list_length(
 								cloneShardList), cloneGroupId)));
 
-	foreach_declared_int(shardId, cloneShardList)
+	foreach(shardIdCell, cloneShardList)
 	{
+		uint64 shardId = *((uint64 *) lfirst(shardIdCell));
+
 		ShardInterval *shardInterval = LoadShardInterval(shardId);
 		List *colocatedShardList = ColocatedShardIntervalList(shardInterval);
 

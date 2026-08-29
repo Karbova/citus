@@ -600,17 +600,27 @@ CompareForeignConstraintRelationshipEdges(const void *leftElement,
 	const ForeignConstraintRelationshipEdge *rightEdge =
 		*((const ForeignConstraintRelationshipEdge **) rightElement);
 
-	int referencingDiff = leftEdge->referencingRelationOID -
-						  rightEdge->referencingRelationOID;
-	int referencedDiff = leftEdge->referencedRelationOID -
-						 rightEdge->referencedRelationOID;
-
-	if (referencingDiff != 0)
+	if (leftEdge->referencingRelationOID < rightEdge->referencingRelationOID)
 	{
-		return referencingDiff;
+		return -1;
 	}
 
-	return referencedDiff;
+	if (leftEdge->referencingRelationOID > rightEdge->referencingRelationOID)
+	{
+		return 1;
+	}
+
+	if (leftEdge->referencedRelationOID < rightEdge->referencedRelationOID)
+	{
+		return -1;
+	}
+
+	if (leftEdge->referencedRelationOID > rightEdge->referencedRelationOID)
+	{
+		return 1;
+	}
+
+	return 0;
 }
 
 

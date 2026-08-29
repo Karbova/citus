@@ -263,8 +263,10 @@ static DestReceiver **
 CreateShardCopyDestReceivers(EState *estate, ShardInterval *shardIntervalToSplitCopy,
 							 List *splitCopyInfoList)
 {
-	DestReceiver **shardCopyDests = palloc0(splitCopyInfoList->length *
-											sizeof(DestReceiver *));
+	int partitionCount = list_length(splitCopyInfoList);
+
+	DestReceiver **shardCopyDests =
+		(DestReceiver **) palloc0(partitionCount * sizeof(DestReceiver *));
 
 	SplitCopyInfo *splitCopyInfo = NULL;
 	int index = 0;
@@ -325,7 +327,7 @@ CreatePartitionedSplitCopyDestReceiver(EState *estate,
 
 	/* Construct PartitionedResultDestReceiver from cache and underlying ShardCopyDestReceivers */
 	int partitionColumnIndex = partitionColumn->varattno - 1;
-	int partitionCount = splitCopyInfoList->length;
+	int partitionCount = list_length(splitCopyInfoList);
 	DestReceiver *splitCopyDestReceiver = CreatePartitionedResultDestReceiver(
 		partitionColumnIndex,
 		partitionCount,

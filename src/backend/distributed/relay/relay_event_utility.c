@@ -857,7 +857,12 @@ UpdateWholeRowColumnReferencesWalker(Node *node, uint64 *shardId)
 void
 SetSchemaNameIfNotExist(char **schemaName, const char *newSchemaName)
 {
-	if ((*schemaName) == NULL)
+	if (schemaName == NULL)
+	{
+		return;
+	}
+
+	if (*schemaName == NULL)
 	{
 		*schemaName = pstrdup(newSchemaName);
 	}
